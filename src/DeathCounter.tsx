@@ -1,7 +1,7 @@
 // src/DeathCounter.tsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { db } from "./firebaseConfig";
-import { collection, doc, getDocs, addDoc, deleteDoc, setDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, addDoc, deleteDoc, updateDoc, increment } from "firebase/firestore";
 
 interface Tracker {
     id: string;
@@ -12,83 +12,45 @@ interface Tracker {
 const DeathCounter: React.FC = () => {
     const [trackers, setTrackers] = useState<Tracker[]>([]);
     const [newTrackerName, setNewTrackerName] = useState<string>("");
-    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchTrackers = async () => {
-            try {
-                const querySnapshot = await getDocs(collection(db, "trackers"));
-                const trackersData: Tracker[] = querySnapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    name: doc.data().name,
-                    deaths: doc.data().deaths,
-                }));
-                setTrackers(trackersData);
-            } catch (error: any) {
-                setError("Error fetching trackers: " + error.message);
-            }
-        };
+        const unsubscribe = onSnapshot(collection(db, "trackers"), (snapshot) => {
+            const trackersData: Tracker[] = snapshot.docs.map((doc) => ({
+                id: doc.id,
+                name: doc.data().name || "",
+                deaths: doc.data().deaths || 0,
+            }));
+            setTrackers(trackersData);
+        });
 
-        fetchTrackers();
+        return () => unsubscribe();
     }, []);
 
     const addTracker = async () => {
         if (newTrackerName.trim() === "") return;
-
-        const newTracker = {
-            name: newTrackerName,
-            deaths: 0,
-        };
-
-        try {
-            const docRef = await addDoc(collection(db, "trackers"), newTracker);
-            setTrackers([...trackers, { ...newTracker, id: docRef.id }]);
-            setNewTrackerName("");
-        } catch (error: any) {
-            setError("Error adding tracker: " + error.message);
-        }
-    };
-
-    const deleteTracker = async (id: string) => {
-        try {
-            await deleteDoc(doc(db, "trackers", id));
-            setTrackers(trackers.filter((tracker) => tracker.id !== id));
-        } catch (error: any) {
-            setError("Error deleting tracker: " + error.message);
-        }
+        await addDoc(collection(db, "trackers"), { name: newTrackerName, deaths: 0 });
+        setNewTrackerName("");
     };
 
     const incrementDeath = async (id: string) => {
-        const tracker = trackers.find((t) => t.id === id);
-        if (!tracker) return;
-
-        const updatedDeaths = tracker.deaths + 1;
-        try {
-            await setDoc(doc(db, "trackers", id), { ...tracker, deaths: updatedDeaths });
-            setTrackers(trackers.map((t) => (t.id === id ? { ...t, deaths: updatedDeaths } : t)));
-        } catch (error: any) {
-            setError("Error updating deaths: " + error.message);
-        }
+        const trackerRef = doc(db, "trackers", id);
+        await updateDoc(trackerRef, { deaths: increment(1) });
     };
 
     const decrementDeath = async (id: string) => {
-        const tracker = trackers.find((t) => t.id === id);
-        if (!tracker || tracker.deaths === 0) return;
+        const trackerRef = doc(db, "trackers", id);
+        await updateDoc(trackerRef, { deaths: increment(-1) });
+    };
 
-        const updatedDeaths = tracker.deaths - 1;
-        try {
-            await setDoc(doc(db, "trackers", id), { ...tracker, deaths: updatedDeaths });
-            setTrackers(trackers.map((t) => (t.id === id ? { ...t, deaths: updatedDeaths } : t)));
-        } catch (error: any) {
-            setError("Error updating deaths: " + error.message);
-        }
+    const deleteTracker = async (id: string) => {
+        const trackerRef = doc(db, "trackers", id);
+        await deleteDoc(trackerRef);
     };
 
     return (
-        <>
+        <div>
             <h1>Elden Ring Death Counter</h1>
-            {error && <p style={{ color: "red" }}>{error}</p>}
-            <div className="new-tracker-container">
+            <div>
                 <input type="text" placeholder="New Tracker Name" value={newTrackerName} onChange={(e) => setNewTrackerName(e.target.value)} />
                 <button onClick={addTracker}>Add Tracker</button>
             </div>
@@ -103,7 +65,7 @@ const DeathCounter: React.FC = () => {
                     </div>
                 ))}
             </div>
-        </>
+        </div>
     );
 };
 
