@@ -8,14 +8,20 @@ import "./styles.css";
 
 const App: React.FC = () => {
     const [user, setUser] = useState<any>(null);
+    const [loading, setLoading] = useState<boolean>(true); // State to track loading status
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
+            setLoading(false); // Set loading to false once we receive the auth status
         });
 
         return () => unsubscribe();
     }, []);
+
+    if (loading) {
+        return <div className="loading-container">Loading...</div>;
+    }
 
     return (
         <div className="container">

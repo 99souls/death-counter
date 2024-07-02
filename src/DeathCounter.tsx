@@ -85,10 +85,10 @@ const DeathCounter: React.FC = () => {
     };
 
     return (
-        <div>
+        <>
             <h1>Elden Ring Death Counter</h1>
             {error && <p style={{ color: "red" }}>{error}</p>}
-            <div className="container">
+            <div className="new-tracker-container">
                 <input type="text" placeholder="New Tracker Name" value={newTrackerName} onChange={(e) => setNewTrackerName(e.target.value)} />
                 <button onClick={addTracker}>Add Tracker</button>
             </div>
@@ -98,12 +98,12 @@ const DeathCounter: React.FC = () => {
                         <h2>{tracker.name}</h2>
                         <p>Deaths: {tracker.deaths}</p>
                         <button onClick={() => incrementDeath(tracker.id)}>Add Death</button>
-                        <button onClick={() => decrementDeath(tracker.id)}>Remove Death</button>
+                        <button onClick={() => decrementDeath(tracker.id)}>Decrement Death</button>
                         <button onClick={() => deleteTracker(tracker.id)}>Delete Tracker</button>
                     </div>
                 ))}
             </div>
-        </div>
+        </>
     );
 };
 
