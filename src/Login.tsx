@@ -24,11 +24,11 @@ const Login: React.FC = () => {
     };
 
     return (
-        <div>
-            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} /> <br></br>
-            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} /> <br></br>
-            <button onClick={handleLogin}>Login</button> <br></br>
-            <button onClick={handleSignUp}>Sign Up</button> <br></br>
+        <div className="login-container">
+            <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <button onClick={handleLogin}>Login</button>
+            <button onClick={handleSignUp}>Sign Up</button>
         </div>
     );
 };

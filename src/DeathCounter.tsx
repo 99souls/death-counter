@@ -1,73 +1,107 @@
 // src/DeathCounter.tsx
 import React, { useState, useEffect } from "react";
 import { db } from "./firebaseConfig";
-import { collection, doc, getDoc, setDoc } from "firebase/firestore";
-import "./styles.css";
+import { collection, doc, getDocs, addDoc, deleteDoc, setDoc } from "firebase/firestore";
+
+interface Tracker {
+    id: string;
+    name: string;
+    deaths: number;
+}
 
 const DeathCounter: React.FC = () => {
-    const [player1Deaths, setPlayer1Deaths] = useState<number>(0);
-    const [player2Deaths, setPlayer2Deaths] = useState<number>(0);
+    const [trackers, setTrackers] = useState<Tracker[]>([]);
+    const [newTrackerName, setNewTrackerName] = useState<string>("");
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        const fetchData = async () => {
-            const player1Doc = await getDoc(doc(collection(db, "deaths"), "player1"));
-            const player2Doc = await getDoc(doc(collection(db, "deaths"), "player2"));
-
-            if (player1Doc.exists()) {
-                setPlayer1Deaths(player1Doc.data().count);
-            }
-            if (player2Doc.exists()) {
-                setPlayer2Deaths(player2Doc.data().count);
+        const fetchTrackers = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "trackers"));
+                const trackersData: Tracker[] = querySnapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    name: doc.data().name,
+                    deaths: doc.data().deaths,
+                }));
+                setTrackers(trackersData);
+            } catch (error: any) {
+                setError("Error fetching trackers: " + error.message);
             }
         };
 
-        fetchData();
+        fetchTrackers();
     }, []);
 
-    const incrementDeath = async (player: string) => {
-        if (player === "player1") {
-            const newCount = player1Deaths + 1;
-            setPlayer1Deaths(newCount);
-            await setDoc(doc(collection(db, "deaths"), "player1"), { count: newCount });
-        } else if (player === "player2") {
-            const newCount = player2Deaths + 1;
-            setPlayer2Deaths(newCount);
-            await setDoc(doc(collection(db, "deaths"), "player2"), { count: newCount });
+    const addTracker = async () => {
+        if (newTrackerName.trim() === "") return;
+
+        const newTracker = {
+            name: newTrackerName,
+            deaths: 0,
+        };
+
+        try {
+            const docRef = await addDoc(collection(db, "trackers"), newTracker);
+            setTrackers([...trackers, { ...newTracker, id: docRef.id }]);
+            setNewTrackerName("");
+        } catch (error: any) {
+            setError("Error adding tracker: " + error.message);
         }
     };
 
-    const decrementDeath = async (player: string) => {
-        if (player === "player1") {
-            if (player1Deaths != 0) {
-                const newCount = player1Deaths - 1;
-                setPlayer1Deaths(newCount);
-                await setDoc(doc(collection(db, "deaths"), "player1"), { count: newCount });
-            }
-        } else if (player === "player2") {
-            if (player2Deaths != 0) {
-                const newCount = player2Deaths - 1;
-                setPlayer2Deaths(newCount);
-                await setDoc(doc(collection(db, "deaths"), "player2"), { count: newCount });
-            }
+    const deleteTracker = async (id: string) => {
+        try {
+            await deleteDoc(doc(db, "trackers", id));
+            setTrackers(trackers.filter((tracker) => tracker.id !== id));
+        } catch (error: any) {
+            setError("Error deleting tracker: " + error.message);
+        }
+    };
+
+    const incrementDeath = async (id: string) => {
+        const tracker = trackers.find((t) => t.id === id);
+        if (!tracker) return;
+
+        const updatedDeaths = tracker.deaths + 1;
+        try {
+            await setDoc(doc(db, "trackers", id), { ...tracker, deaths: updatedDeaths });
+            setTrackers(trackers.map((t) => (t.id === id ? { ...t, deaths: updatedDeaths } : t)));
+        } catch (error: any) {
+            setError("Error updating deaths: " + error.message);
+        }
+    };
+
+    const decrementDeath = async (id: string) => {
+        const tracker = trackers.find((t) => t.id === id);
+        if (!tracker || tracker.deaths === 0) return;
+
+        const updatedDeaths = tracker.deaths - 1;
+        try {
+            await setDoc(doc(db, "trackers", id), { ...tracker, deaths: updatedDeaths });
+            setTrackers(trackers.map((t) => (t.id === id ? { ...t, deaths: updatedDeaths } : t)));
+        } catch (error: any) {
+            setError("Error updating deaths: " + error.message);
         }
     };
 
     return (
         <div>
             <h1>Elden Ring Death Counter</h1>
+            {error && <p style={{ color: "red" }}>{error}</p>}
+            <div className="container">
+                <input type="text" placeholder="New Tracker Name" value={newTrackerName} onChange={(e) => setNewTrackerName(e.target.value)} />
+                <button onClick={addTracker}>Add Tracker</button>
+            </div>
             <div className="player-container">
-                <div className="player">
-                    <h2>Steff</h2>
-                    <p>Deaths: {player1Deaths}</p>
-                    <button onClick={() => incrementDeath("player1")}>Add Death</button> <br></br>
-                    <button onClick={() => decrementDeath("player1")}>Remove Death</button>
-                </div>
-                <div className="player">
-                    <h2>Dan</h2>
-                    <p>Deaths: {player2Deaths}</p>
-                    <button onClick={() => incrementDeath("player2")}>Add Death</button> <br></br>
-                    <button onClick={() => decrementDeath("player2")}>Remove Death</button>
-                </div>
+                {trackers.map((tracker) => (
+                    <div key={tracker.id} className="player">
+                        <h2>{tracker.name}</h2>
+                        <p>Deaths: {tracker.deaths}</p>
+                        <button onClick={() => incrementDeath(tracker.id)}>Add Death</button>
+                        <button onClick={() => decrementDeath(tracker.id)}>Remove Death</button>
+                        <button onClick={() => deleteTracker(tracker.id)}>Delete Tracker</button>
+                    </div>
+                ))}
             </div>
         </div>
     );

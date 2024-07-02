@@ -23,17 +23,16 @@ h1 {
     margin-bottom: 20px;
 }
 
-.player-container {
-    display: flex;
-    justify-content: space-around;
-    margin-top: 20px;
-}
-
-.player {
+input[type="text"],
+input[type="email"],
+input[type="password"] {
     background-color: #3a3a3a;
+    color: white;
+    border: 1px solid #5c5cff;
     padding: 10px;
     border-radius: 5px;
-    width: 45%;
+    margin-top: 10px;
+    width: calc(100% - 22px); /* Full width minus padding and border */
 }
 
 button {
@@ -44,17 +43,45 @@ button {
     border-radius: 5px;
     cursor: pointer;
     margin-top: 10px;
+    margin-left: 5px; /* Adjust margin between input and button */
 }
 
 button:hover {
     background-color: #4a4ac4;
 }
 
-input {
+.player-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.player {
     background-color: #3a3a3a;
-    color: white;
-    border: 1px solid #5c5cff;
     padding: 10px;
     border-radius: 5px;
-    margin-top: 10px;
+    width: 200px;
+    margin: 10px;
+    text-align: center;
+}
+
+.player button {
+    margin-top: 5px;
+}
+
+.player button:nth-child(2) {
+    background-color: #c45a5a;
+}
+
+.player button:nth-child(2):hover {
+    background-color: #b33a3a;
+}
+
+.player button:nth-child(3) {
+    background-color: #5c5cff;
+}
+
+.player button:nth-child(3):hover {
+    background-color: #4a4ac4;
 }
