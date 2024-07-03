@@ -90,26 +90,46 @@ button:focus {
     width: 100%;
 }
 
-.new-tracker-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 30px;
-}
-
-.new-tracker-container input[type="text"] {
-    margin-right: 10px;
-    flex-grow: 1;
-}
-
-.new-tracker-container button {
-    margin-top: 0;
-    flex-shrink: 0;
-}
-
 .loading-container {
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
+}
+
+.player-container,
+.settings-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.player,
+.settings-item {
+    background-color: #21242b;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.settings-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+.settings-item input {
+    margin-right: 10px;
+    flex-grow: 1;
+}
+
+.username {
+    font-size: 2rem;
+}
+
+.settings-item span {
+    white-space: nowrap;
+    margin-right: 10px;
 }
